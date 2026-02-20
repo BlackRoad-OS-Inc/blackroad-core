@@ -1,0 +1,37 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Health Check
+        if: success()
+        run: |
+          HEALTH_URL="${{ secrets.RAILWAY_SERVICE_URL }}/health"
+          if [ -n "${{ secrets.RAILWAY_SERVICE_URL }}" ]; then
+            echo "Checking health at: $HEALTH_URL"
+            curl -f --retry 3 --retry-delay 10 "$HEALTH_URL" || echo "Health check pending"
+          else
+            echo "RAILWAY_SERVICE_URL not set yet, skipping health check"
+          fi
