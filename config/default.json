@@ -1,0 +1,15 @@
+{
+  "port": 8787,
+  "host": "127.0.0.1",
+  "logLevel": "info",
+  "rateLimit": {
+    "windowMs": 60000,
+    "maxRequests": 100
+  },
+  "providers": {
+    "anthropic": { "enabled": true, "baseUrl": "https://api.anthropic.com" },
+    "openai": { "enabled": true, "baseUrl": "https://api.openai.com" },
+    "ollama": { "enabled": true, "baseUrl": "http://localhost:11434" },
+    "gemini": { "enabled": true, "baseUrl": "https://generativelanguage.googleapis.com" }
+  }
+}

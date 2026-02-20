@@ -1,0 +1,10 @@
+{
+  "agents": {
+    "octavia": { "providers": ["anthropic", "openai"], "maxTokens": 8192, "rateLimit": 60 },
+    "lucidia": { "providers": ["anthropic", "ollama"], "maxTokens": 8192, "rateLimit": 60 },
+    "alice": { "providers": ["ollama"], "maxTokens": 4096, "rateLimit": 30 },
+    "cipher": { "providers": ["anthropic"], "maxTokens": 4096, "rateLimit": 30 },
+    "prism": { "providers": ["openai", "ollama"], "maxTokens": 4096, "rateLimit": 30 },
+    "planner": { "providers": ["anthropic", "openai", "gemini"], "maxTokens": 16384, "rateLimit": 10 }
+  }
+}

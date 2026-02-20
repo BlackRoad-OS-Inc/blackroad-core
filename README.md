@@ -1,35 +1,56 @@
 # blackroad-core
 
-Core orchestration layer and runtime engine for BlackRoad OS.
+Core orchestration layer and tokenless gateway for BlackRoad OS.
+
+## Architecture
+
+```
+Client (Web/CLI) → Gateway → Policy Engine → Provider (Anthropic/OpenAI/Ollama/Gemini)
+```
+
+Agents never hold API keys. All provider communication flows through this gateway.
 
 ## Quick Start
 
 ```bash
 npm install
-npm run dev     # Development (auto-reload)
-npm start       # Production
-npm test        # Run tests
+npm run dev          # Start dev server at localhost:8787
 ```
 
-## Endpoints
+## Development
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Health check |
-| GET | `/metrics` | Runtime metrics |
-| GET | `/v1/agents` | Agent roster |
-| POST | `/v1/agent` | Agent invocation |
+```bash
+npm run typecheck    # Type check
+npm run test         # Run tests
+npm run lint         # Lint
+npm run build        # Compile to dist/
+```
 
-## Deployment
+## Project Structure
 
-Deploys to Railway on push to `main`. See `railway.toml` for config.
+```
+src/
+├── gateway/         Server, middleware, routes
+│   ├── middleware/   Rate limiter, auth, request logger
+│   └── routes/      Health, chat, agents, invoke
+├── providers/       AI provider adapters
+├── policies/        Permission engine
+├── protocol/        Zod schemas, error types
+├── agents/          Agent registry and invoker
+├── prompts/         System prompt loader and builder
+└── telemetry/       Logger, metrics
+```
 
-## Environment Variables
+## API
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8080` | Server port |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/health` | GET | Health check (no auth) |
+| `/v1/chat/completions` | POST | Chat completion |
+| `/v1/agents` | GET | List agents |
+| `/v1/agents/:name` | GET | Get agent details |
+| `/v1/invoke` | POST | Invoke an agent |
 
 ## License
 
-Proprietary - BlackRoad OS, Inc. All rights reserved.
+Copyright (c) 2025-2026 BlackRoad OS, Inc. All Rights Reserved.

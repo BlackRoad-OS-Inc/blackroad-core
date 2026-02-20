@@ -1,15 +1,15 @@
-name: CI
+name: Release
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    tags: ['v*']
 
 jobs:
-  build:
-    name: Build & Test
+  release:
+    name: Build & Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -21,4 +21,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run test
-      - run: chmod +x scripts/verify-tokenless.sh && ./scripts/verify-tokenless.sh
+      - run: npm run build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
