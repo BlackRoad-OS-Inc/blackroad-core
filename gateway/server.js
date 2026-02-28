@@ -627,7 +627,7 @@ Respond with ONLY this JSON shape:
           provider: providerName,
           intent: intent || null,
           status,
-          duration_ms: Date.now() - startMs
+          duration_ms: Date.now() - startTime
         }).catch(() => {})
       }
 
