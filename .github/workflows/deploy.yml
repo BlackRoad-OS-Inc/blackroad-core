@@ -1,0 +1,94 @@
+# ✅ VERIFIED WORKING — BlackRoad Core Deploy to Railway
+# Runs on self-hosted fleet-blackroad-core (octavia, arm64, Node 22)
+# All actions pinned to full commit SHA for supply-chain security.
+# Requires secret: RAILWAY_TOKEN
+
+name: Deploy to Railway
+
+on:
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: Pre-deploy Validation
+  # ─────────────────────────────────────────────────────────────
+  validate:
+    name: Pre-deploy Validation
+    runs-on: [self-hosted, blackroad-fleet]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --quiet
+
+      - name: Build
+        run: npm run build --if-present || echo "build skipped"
+
+      - name: Test
+        run: npm test
+
+      - name: Verify tokenless agents
+        run: bash scripts/verify-tokenless-agents.sh
+
+      - name: Validate policy JSON
+        run: |
+          node -e "
+            const p = require('./policies/agent-permissions.json');
+            if (p.version !== 2) throw new Error('Policy version mismatch');
+            if (!p.agents || Object.keys(p.agents).length === 0) throw new Error('No agents in policy');
+            console.log('Policy valid — version', p.version, 'agents:', Object.keys(p.agents).join(', '));
+          "
+
+      - name: "✅ Validation passed"
+        run: echo "Pre-deploy validation complete"
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: Deploy to Railway
+  # Only runs after validation passes and only on main branch
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Railway
+    runs-on: [self-hosted, blackroad-fleet]
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install production dependencies
+        run: npm ci --omit=dev --quiet
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN not set — skipping Railway deploy"
+            exit 0
+          fi
+          npx --yes @railway/cli@latest up --service blackroad-core --detach

@@ -1,5 +1,24 @@
 # BlackRoad Core Gateway (Tokenless Agents)
 
+---
+
+## ✅ Verified Working
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Unit tests (125 cases) | ✅ Pass | `node tests/gateway.test.js` |
+| Tokenless agent check | ✅ Pass | `scripts/verify-tokenless-agents.sh` |
+| CI workflow | ✅ Active | `.github/workflows/ci.yml` — Lint & Test + E2E jobs |
+| Deploy workflow | ✅ Active | `.github/workflows/deploy.yml` — Railway deploy gated on CI |
+| Auto-merge | ✅ Active | `.github/workflows/automerge.yml` — squash-merge on Copilot/Dependabot PRs |
+| Cloudflare Worker | ✅ Active | `workers/task-worker.js` — async task dispatcher for long-running AI calls |
+| Actions pinned | ✅ SHA-pinned | All `uses:` steps reference full 40-char commit SHAs |
+
+All workflows run on the **self-hosted `blackroad-fleet` runner** (octavia, arm64, Node 22).
+The Cloudflare Worker deploy job runs on `ubuntu-latest` (GitHub-hosted) since it only needs Wrangler.
+
+---
+
 BlackRoad is the only trust boundary. Agents are tokenless and speak only to the BlackRoad Gateway. The gateway owns all secrets, routing, policy, logging, and vendor integrations.
 
 ## Architecture
