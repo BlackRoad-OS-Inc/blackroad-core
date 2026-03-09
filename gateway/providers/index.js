@@ -15,7 +15,8 @@ const providers = {
   anthropic,
   gemini,
   deepseek,
-  groq
+  groq,
+  mistral
 }
 
 function getProvider(name) {
