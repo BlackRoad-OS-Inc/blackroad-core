@@ -3,6 +3,7 @@
 export interface ProviderConfig {
   enabled: boolean
   baseUrl: string
+  apiKey?: string
 }
 
 export interface GatewayConfig {
@@ -26,10 +27,12 @@ export function loadConfig(): GatewayConfig {
       anthropic: {
         enabled: true,
         baseUrl: process.env.BLACKROAD_ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com',
+        apiKey: process.env.BLACKROAD_ANTHROPIC_API_KEY,
       },
       openai: {
         enabled: true,
         baseUrl: process.env.BLACKROAD_OPENAI_BASE_URL ?? 'https://api.openai.com',
+        apiKey: process.env.BLACKROAD_OPENAI_API_KEY,
       },
       ollama: {
         enabled: true,
@@ -40,6 +43,7 @@ export function loadConfig(): GatewayConfig {
         baseUrl:
           process.env.BLACKROAD_GEMINI_BASE_URL ??
           'https://generativelanguage.googleapis.com',
+        apiKey: process.env.BLACKROAD_GEMINI_API_KEY,
       },
     },
   }
