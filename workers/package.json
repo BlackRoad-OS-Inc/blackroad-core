@@ -1,0 +1,7 @@
+{
+  "name": "blackroad-task-worker",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "BlackRoad async task worker for Cloudflare Workers — handles long-running AI gateway tasks",
+  "private": true
+}

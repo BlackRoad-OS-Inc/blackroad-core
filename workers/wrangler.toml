@@ -1,0 +1,22 @@
+# BlackRoad Task Worker — Wrangler configuration
+# Handles long-running AI gateway tasks via async dispatch.
+# Deploy: wrangler deploy (requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID)
+
+name = "blackroad-task-worker"
+main = "task-worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Worker runs on Cloudflare's global edge network
+# Free plan: 100k requests/day, 10ms CPU per request
+# Paid plan: up to 30s CPU per request (needed for AI tasks)
+
+[observability]
+enabled = true
+
+# Environment variables (non-secret)
+[vars]
+WORKER_ENV = "production"
+
+# Secrets (set via: wrangler secret put BLACKROAD_GATEWAY_URL)
+# BLACKROAD_GATEWAY_URL — URL of the BlackRoad Gateway (e.g. https://gateway.blackroad.io)

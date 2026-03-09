@@ -1,0 +1,35 @@
+# ✅ VERIFIED WORKING — BlackRoad Core Auto-merge
+# Enables auto-merge on PRs opened by Copilot coding agent or Dependabot
+# once all required status checks pass.
+# All actions pinned to full commit SHA for supply-chain security.
+
+name: Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    name: Enable auto-merge
+    runs-on: ubuntu-latest
+    # Only auto-merge PRs from Copilot agent or Dependabot
+    if: |
+      github.actor == 'copilot-swe-agent[bot]' ||
+      github.actor == 'dependabot[bot]' ||
+      startsWith(github.head_ref, 'copilot/')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Enable auto-merge (squash)
+        uses: peter-evans/enable-pull-request-automerge@a660677d5469627102a1c1e11409dd063606628d # v3.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: squash

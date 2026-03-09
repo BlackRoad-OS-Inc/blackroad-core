@@ -1,36 +1,16 @@
 {
-  "name": "@blackroad/core",
-  "version": "0.1.0",
-  "description": "Core orchestration layer and runtime engine for BlackRoad OS",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "name": "blackroad-core",
+  "version": "2.0.0",
+  "description": "BlackRoad OS tokenless gateway — all AI providers behind one interface",
+  "type": "commonjs",
+  "main": "gateway/server.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint src/ test/",
-    "format": "prettier --write ."
+    "start": "node gateway/server.js",
+    "dev": "node --watch gateway/server.js",
+    "test": "node tests/gateway.test.js",
+    "verify": "bash scripts/verify-tokenless-agents.sh"
   },
-  "engines": {
-    "node": ">=22.0.0"
-  },
+  "keywords": ["blackroad", "gateway", "ai", "tokenless"],
   "license": "UNLICENSED",
-  "private": true,
-  "dependencies": {
-    "@hono/node-server": "^1.13.0",
-    "hono": "^4.7.0",
-    "pino": "^9.6.0",
-    "zod": "^3.24.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "prettier": "^3.4.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
-  }
+  "private": true
 }
