@@ -8,7 +8,9 @@ const testConfig: GatewayConfig = {
   host: '127.0.0.1',
   logLevel: 'silent',
   rateLimit: { windowMs: 60000, maxRequests: 100 },
-  providers: {},
+  providers: {
+    ollama: { enabled: true, baseUrl: 'http://localhost:11434' },
+  },
 }
 
 describe('Gateway Server', () => {
