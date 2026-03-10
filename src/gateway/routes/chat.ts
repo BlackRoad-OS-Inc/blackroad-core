@@ -2,30 +2,12 @@
 import { Hono } from 'hono'
 import { ChatRequestSchema } from '../../protocol/schemas.js'
 import { ValidationError } from '../../protocol/errors.js'
-import type { AgentInvoker } from '../../agents/invoker.js'
-import type { AgentDefinition } from '../../agents/registry.js'
+import type { ProviderRegistry } from '../../providers/registry.js'
 
-// Default agent used for direct /v1/chat/completions calls
-const DEFAULT_AGENT: AgentDefinition = {
-  name: 'gateway',
-  title: 'Gateway Direct',
-  role: 'chat',
-  providers: ['anthropic', 'openai', 'ollama'],
-  capabilities: ['chat'],
-  fallbackChain: ['anthropic', 'openai', 'ollama'],
-}
+export function createChatRoutes(providers: ProviderRegistry): Hono {
+  const routes = new Hono()
 
-// Legacy export for backwards compatibility
-export const chatRoutes = new Hono()
-chatRoutes.post('/v1/chat/completions', async (c) => {
-  return c.json({ error: 'Provider not configured. Use createChatRoutes(invoker).' }, 501)
-})
-
-// Factory that wires the invoker
-export function createChatRoutes(invoker: AgentInvoker): Hono {
-  const router = new Hono()
-
-  router.post('/v1/chat/completions', async (c) => {
+  routes.post('/v1/chat/completions', async (c) => {
     const body = await c.req.json()
     const parsed = ChatRequestSchema.safeParse(body)
 
@@ -35,16 +17,35 @@ export function createChatRoutes(invoker: AgentInvoker): Hono {
       )
     }
 
-    const response = await invoker.invoke(DEFAULT_AGENT, parsed.data.messages, parsed.data.max_tokens)
+    const model = parsed.data.model ?? 'llama3.2:3b'
+
+    // Route through Ollama provider
+    const ollama = providers.get('ollama')
+    if (!ollama) {
+      throw new ValidationError('No provider available')
+    }
+
+    const result = await ollama.chat({
+      model,
+      messages: parsed.data.messages,
+      temperature: parsed.data.temperature,
+      maxTokens: parsed.data.max_tokens,
+    })
 
     return c.json({
-      id: response.id,
-      content: response.content,
-      model: response.model,
-      provider: 'gateway',
-      usage: response.usage,
+      id: result.id,
+      content: result.content,
+      model: result.model,
+      provider: 'ollama',
+      usage: result.usage,
     })
   })
 
-  return router
+  return routes
 }
+
+// Legacy export for backwards compat
+export const chatRoutes = new Hono()
+chatRoutes.post('/v1/chat/completions', async (c) => {
+  return c.json({ error: 'Use createChatRoutes() instead' }, 500)
+})

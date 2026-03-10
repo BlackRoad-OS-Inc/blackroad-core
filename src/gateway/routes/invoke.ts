@@ -2,28 +2,22 @@
 import { Hono } from 'hono'
 import { InvokeRequestSchema } from '../../protocol/schemas.js'
 import { ValidationError, GatewayError } from '../../protocol/errors.js'
+import type { AgentRegistry } from '../../agents/registry.js'
 import type { AgentInvoker } from '../../agents/invoker.js'
-import type { AgentDefinition } from '../../agents/registry.js'
 
-// Built-in agents with fallback chains
-const BUILTIN_AGENTS: Record<string, AgentDefinition> = {
-  octavia: { name: 'octavia', title: 'The Architect', role: 'architecture', providers: ['anthropic', 'openai'], capabilities: ['design', 'review'], fallbackChain: ['anthropic', 'openai'] },
-  cece: { name: 'cece', title: 'CECE', role: 'assistant', providers: ['ollama'], capabilities: ['chat', 'local'], fallbackChain: ['ollama'] },
-  lucidia: { name: 'lucidia', title: 'Lucidia', role: 'companion', providers: ['anthropic', 'ollama'], capabilities: ['chat', 'reasoning'], fallbackChain: ['anthropic', 'ollama'] },
-  aria: { name: 'aria', title: 'Aria', role: 'ops', providers: ['openai', 'ollama'], capabilities: ['ops', 'monitoring'], fallbackChain: ['openai', 'ollama'] },
+const AGENT_SYSTEM_PROMPTS: Record<string, string> = {
+  octavia: 'You are Octavia, The Architect. You specialize in systems design, architecture, and strategic technical decisions. You are brutally honest and see patterns others miss. Be concise and direct.',
+  lucidia: 'You are Lucidia, The Dreamer. You specialize in creative vision, planning, and finding human meaning in technical decisions. You are imaginative yet grounded. Be thoughtful and insightful.',
+  alice: 'You are Alice, The Operator. You specialize in DevOps, automation, and infrastructure. You are pragmatic and action-oriented. Give direct, actionable answers.',
+  cipher: 'You are Cipher, The Sentinel. You specialize in security, encryption, and access control. You are meticulous and thorough. Focus on security implications.',
+  prism: 'You are Prism, The Analyst. You specialize in data analysis and pattern recognition. You find meaning in numbers and trends. Be analytical and precise.',
+  planner: 'You are Planner, The Strategist. You specialize in task planning, decomposition, and coordination. Break complex tasks into clear steps.',
 }
 
-// Legacy export
-export const invokeRoutes = new Hono()
-invokeRoutes.post('/v1/invoke', async (c) => {
-  return c.json({ error: 'Orchestration not configured. Use createInvokeRoutes(invoker).' }, 501)
-})
+export function createInvokeRoutes(agents: AgentRegistry, invoker: AgentInvoker): Hono {
+  const routes = new Hono()
 
-// Factory that wires the invoker
-export function createInvokeRoutes(invoker: AgentInvoker): Hono {
-  const router = new Hono()
-
-  router.post('/v1/invoke', async (c) => {
+  routes.post('/v1/invoke', async (c) => {
     const body = await c.req.json()
     const parsed = InvokeRequestSchema.safeParse(body)
 
@@ -33,23 +27,35 @@ export function createInvokeRoutes(invoker: AgentInvoker): Hono {
       )
     }
 
-    const agentDef = BUILTIN_AGENTS[parsed.data.agent]
-    if (!agentDef) {
+    const agent = agents.get(parsed.data.agent)
+    if (!agent) {
       throw new GatewayError(`Agent not found: ${parsed.data.agent}`, 'AGENT_NOT_FOUND', 404)
     }
 
-    const messages = [{ role: 'user' as const, content: parsed.data.task }]
-    const response = await invoker.invoke(agentDef, messages)
+    const systemPrompt = AGENT_SYSTEM_PROMPTS[agent.name] ?? `You are ${agent.title}, a BlackRoad OS agent specializing in ${agent.role}.`
+
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: parsed.data.task },
+    ]
+
+    const result = await invoker.invoke(agent, messages)
 
     return c.json({
-      id: response.id,
-      agent: parsed.data.agent,
-      result: response.content,
-      model: response.model,
-      provider: 'gateway',
-      usage: response.usage,
+      id: result.id,
+      agent: agent.name,
+      content: result.content,
+      model: result.model,
+      provider: 'ollama',
+      usage: result.usage,
     })
   })
 
-  return router
+  return routes
 }
+
+// Legacy export for backwards compat
+export const invokeRoutes = new Hono()
+invokeRoutes.post('/v1/invoke', async (c) => {
+  return c.json({ error: 'Use createInvokeRoutes() instead' }, 500)
+})

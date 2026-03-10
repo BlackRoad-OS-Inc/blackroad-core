@@ -26,7 +26,7 @@ export class AgentInvoker {
         }
 
         return await provider.chat({
-          model: '',
+          model: 'llama3.2:3b',
           messages,
           maxTokens: maxTokens ?? 1024,
         })
