@@ -1,167 +1,41 @@
-# BlackRoad Core Gateway (Tokenless Agents)
+<div align="center">
+
+<img src="https://images.blackroad.io/pixel-art/road-logo.png" alt="BlackRoad OS" width="80" />
+
+# blackroad-core
+
+**ARCHIVED: Consolidated into BlackRoad-OS-Inc/blackroad**
+
+[![BlackRoad OS](https://img.shields.io/badge/BlackRoad_OS-Pave_Tomorrow-FF2255?style=for-the-badge&labelColor=000000)](https://blackroad.io)
+[![License](https://img.shields.io/badge/License-Proprietary-FF6B2B?style=for-the-badge&labelColor=000000)](./LICENSE)
+[![Edge AI](https://img.shields.io/badge/Edge_AI-52_TOPS-00D4FF?style=for-the-badge&labelColor=000000)](https://github.com/BlackRoad-OS-Inc)
+
+</div>
+
+<div align="center">
+<sub>Part of the <a href="https://blackroad.io">BlackRoad OS</a> ecosystem — sovereign edge AI infrastructure</sub>
+</div>
 
 ---
 
-## ✅ Verified Working
+## Overview
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Unit tests (125 cases) | ✅ Pass | `node tests/gateway.test.js` |
-| Tokenless agent check | ✅ Pass | `scripts/verify-tokenless-agents.sh` |
-| CI workflow | ✅ Active | `.github/workflows/ci.yml` — Lint & Test + E2E jobs |
-| Deploy workflow | ✅ Active | `.github/workflows/deploy.yml` — Railway deploy gated on CI |
-| Auto-merge | ✅ Active | `.github/workflows/automerge.yml` — squash-merge on Copilot/Dependabot PRs |
-| Cloudflare Worker | ✅ Active | `workers/task-worker.js` — async task dispatcher for long-running AI calls |
-| Actions pinned | ✅ SHA-pinned | All `uses:` steps reference full 40-char commit SHAs |
+ARCHIVED: Consolidated into BlackRoad-OS-Inc/blackroad
 
-All workflows run on the **self-hosted `blackroad-fleet` runner** (octavia, arm64, Node 22).
-The Cloudflare Worker deploy job runs on `ubuntu-latest` (GitHub-hosted) since it only needs Wrangler.
+## License
+
+**Proprietary** — Copyright © 2024–2026 [BlackRoad OS, Inc.](https://blackroad.io) All rights reserved.
+
+Founder & CEO: **Alexa Louise Amundson** · Delaware C-Corp
+
+See [LICENSE](./LICENSE) for full terms.
 
 ---
 
-BlackRoad is the only trust boundary. Agents are tokenless and speak only to the BlackRoad Gateway. The gateway owns all secrets, routing, policy, logging, and vendor integrations.
+<div align="center">
 
-## Architecture
+**BlackRoad OS — Pave Tomorrow.**
 
-```
-[ Agent CLIs ] ---> [ BlackRoad Gateway ] ---> [ Ollama ]
-                                  \-------> [ Claude (Anthropic) ]
-                                  \-------> [ OpenAI ]
-                                  \-------> [ Future Providers ]
-```
+[blackroad.io](https://blackroad.io) · [GitHub](https://github.com/BlackRoad-OS-Inc) · [Brand](https://brand.blackroad.io)
 
-## Trust Boundary
-
-- Agents do not store tokens, do not embed credentials, and do not know provider URLs.
-- Agents only use local IPC/HTTP to the gateway and fail if the gateway is unavailable.
-- The gateway is the only component allowed to hold secrets or call vendor APIs.
-- All routing, policy checks, and audit logs live inside the gateway.
-
-## Directory Layout
-
-```
-blackroad-core/
-  gateway/
-    server.js
-    server.sh
-    providers/
-      ollama.js
-      anthropic.js
-      openai.js
-    system-prompts.json
-    logs/
-  agents/
-    planner.sh
-  protocol/
-    request.json
-    response.json
-  policies/
-    agent-permissions.json
-  scripts/
-    verify-tokenless-agents.sh
-```
-
-## Quick Start
-
-1) Run the gateway (tokens only live in the gateway environment):
-
-```bash
-cd /Users/alexa/blackroad/blackroad-core
-export BLACKROAD_OPENAI_API_KEY='...'
-export BLACKROAD_ANTHROPIC_API_KEY='...'
-./gateway/server.sh
-```
-
-2) Run the tokenless agent:
-
-```bash
-./agents/planner.sh "analyze repo"
-```
-
-If your shell has token-like env vars, the agent will refuse to run. Use a clean env:
-
-```bash
-env -i BLACKROAD_GATEWAY_URL=http://127.0.0.1:8787 ./agents/planner.sh "analyze repo"
-```
-
-## Gateway Configuration
-
-Gateway settings:
-
-- `BLACKROAD_GATEWAY_BIND` (default: `127.0.0.1`)
-- `BLACKROAD_GATEWAY_PORT` (default: `8787`)
-- `BLACKROAD_GATEWAY_ALLOW_REMOTE` (`true` to allow non-local requests)
-- `BLACKROAD_GATEWAY_POLICY_PATH`
-- `BLACKROAD_GATEWAY_PROMPT_PATH`
-- `BLACKROAD_GATEWAY_LOG_PATH`
-
-Provider settings (gateway only):
-
-- `BLACKROAD_OLLAMA_URL`, `BLACKROAD_OLLAMA_MODEL`
-- `BLACKROAD_OPENAI_API_KEY`, `BLACKROAD_OPENAI_BASE_URL`, `BLACKROAD_OPENAI_MODEL`
-- `BLACKROAD_ANTHROPIC_API_KEY`, `BLACKROAD_ANTHROPIC_BASE_URL`, `BLACKROAD_ANTHROPIC_MODEL`
-
-## Protocol
-
-Request JSON (see `protocol/request.json`):
-
-```json
-{
-  "agent": "planner",
-  "intent": "analyze",
-  "input": "Review this repository",
-  "context": {
-    "repo": "blackroad"
-  }
-}
-```
-
-Response JSON (see `protocol/response.json`):
-
-```json
-{
-  "status": "ok",
-  "provider": "ollama",
-  "output": "text",
-  "metadata": {
-    "latency_ms": 123
-  },
-  "request_id": "uuid"
-}
-```
-
-## Policy Model
-
-`policies/agent-permissions.json` defines:
-
-- Which agents are allowed
-- Allowed intents per agent
-- Allowed providers per agent
-- Default routing per intent
-- Max input size
-
-The gateway enforces this policy on every request.
-
-## Security Model
-
-- Gateway binds to `127.0.0.1` by default.
-- Set `BLACKROAD_GATEWAY_ALLOW_REMOTE=true` only when placing the gateway behind a tunnel or a trusted network boundary.
-- Suggested auth options for remote access: local socket, machine identity, or mTLS at the tunnel edge.
-- All API keys live only in the gateway environment.
-
-## No-Token Safeguards
-
-- Agents are tokenless by design and do not reference vendor API keys or URLs.
-- `scripts/verify-tokenless-agents.sh` scans agent code for forbidden strings.
-
-Run the check:
-
-```bash
-./scripts/verify-tokenless-agents.sh
-```
-
-## Extending
-
-- Add a provider: create a new file in `gateway/providers/` and register it in `gateway/providers/index.js`.
-- Add an agent: create a new CLI in `agents/` and register permissions in `policies/agent-permissions.json`.
-- Add prompts: update `gateway/system-prompts.json`.
+</div>
